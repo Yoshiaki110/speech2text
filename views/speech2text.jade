@@ -1,0 +1,29 @@
+extends ./layout
+
+block content
+	header
+		div(class='header-content')
+			div(class='header-content-inner')
+				img(src="img/face-listen-white.svg" class="title-image")
+				h2 音声認識サンプルアプリケーション
+				div(class='spacer-20')
+				p マイク音声を認識してテキスト出力するサンプルアプリケーションです
+				a(href='#js-text-textview' class='btn-skeleton btn-medium page-scroll') 試す
+	section(id='main-containts')
+		div(class='container')
+			div(class='form' role='form')
+				div(class="form-group" id="js-text-form-group")
+					h5 認識結果テキスト               	
+					textarea(id="js-text-textview" class='form-control' rows='10' disabled="disabled" )
+							
+			div(class='box-footer text-center')
+				a(type='button' class='btn btn-primary btn-large' id="js-recording-button") 音声認識開始
+			div(class='spacer-200')
+			script(src='/javascripts/recorder.js')
+			script(src='/javascripts/recaius-speech-recognition-import.js')
+			script(src='/javascripts/speech2text.js')
+					
+						
+						
+
+			

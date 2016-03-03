@@ -1,0 +1,15 @@
+{
+  "name": "recuius sample",
+  "description": "Development foundation of Node.js application",
+  "env": {
+    "NODE_ENV": {
+      "value": "development"
+    },
+    "RECAIUS_ID": {
+      "value": ""
+    },
+    "RECAIUS_PASSWORD": {
+      "value": ""
+    }
+  }
+}
