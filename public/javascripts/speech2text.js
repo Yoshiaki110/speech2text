@@ -1,5 +1,6 @@
 var totalResultStr = '';
 var timerId;
+var intervalId;
 var timelimitMs = 30000; //自動で録音停止するまでの時間(10秒)
 var timelimitSec = timelimitMs/1000; //録音残り時間表示用
 
@@ -39,7 +40,7 @@ var captureStart = function () {
     timerId = setTimeout(captureStop,timelimitMs);
     
     //1秒単位で残り録音時間を表示
-    var intervalId = setInterval(function(){
+    intervalId = setInterval(function(){
         if(timelimitSec > 0){
             $('#js-recording-button').html('音声認識中:'+ timelimitSec);
         }else{
@@ -60,13 +61,18 @@ var captureStart = function () {
     $('#js-recording-button').removeClass('btn-primary');
     $('#js-recording-button').addClass('btn-warning');
     $("#js-recording-button").unbind("click");
-    // $("#js-recording-button").bind("click", function (e) {
-    //     captureStop();
-    // });
+    $("#js-recording-button").bind("click", function (e) {
+        captureStop();
+    });
 }
 
 var captureStop = function() {
     clearTimeout(timerId);
+    clearInterval(intervalId);
+    $('#js-recording-button').removeClass('btn-warning');
+    $('#js-recording-button').addClass('btn-primary');
+    $('#js-recording-button').html('音声認識開始');
+
     recaiusSpeechRecognition.recognitionStop(stopSuccessCallback, stopErrorCallback);
 }
 
@@ -132,6 +138,7 @@ function typeResultText(appendText) {
 
 var clearAll = function () {
     totalResultStr = '';
+    timelimitSec = timelimitMs/1000;
 }
 
 
