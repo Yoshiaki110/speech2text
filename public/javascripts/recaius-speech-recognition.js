@@ -11,27 +11,31 @@
  * @example 利用する際のサンプルコード<br>
  * 1.必要ファイルのインポート
  *   利用環境に応じて下記行を追加して必要なファイルを読み込むようにする。
- *   ■Cordova版を利用する場合
+ *   ■Cordova版を利用する場合（但し利用アプリ側で既にcordova.jsの設定をされている場合は、cordova.jsの読み込みは不要です）
  *   &lt;script type=&quot;text/javascript&quot; src=&quot;./cordova.js&quot;&gt;&lt;/script&gt;
  *   &lt;script type=&quot;text/javascript&quot; src=&quot;javascripts/recaius-speech-recognition-import.js&quot;&gt;&lt;/script&gt;
+ *
+ *   ※Cordova版利用の際に必要となる録音プラグイン(recaius-recording-cordova-plugin)ではCordova設定により端末側に音声ファイルが出力されますのでご留意願います。
  *
  *   ■WebRCT版を利用する場合
  *   &lt;script type=&quot;text/javascript&quot; src=&quot;javascripts/recaius-speech-recognition-import.js&quot;&gt;&lt;/script&gt;
  *
  * 2.設定登録
- *   下記のような関数を作成し、recaiusSpeechRecognition.setConfig()を呼び出してください。
- *   function setConfig(){
+ *  下記のような関数を作成し、recaiusSpeechRecognition.setConfig()を呼び出してください。
+ *  function setConfig(){
  *    var options = {};
  *    //接続用パラメータ
- *    options["host"] = "接続先ホストを指定";
- *    options["userid"] = "サービス利用IDを設定";
- *    options["password"] = "パスワードを設定";
+ *    options["host"] = "接続先ホストを指定";     // 必須パラメータ
+ *    options["userid"] = "サービス利用IDを設定"; // 必須パラメータ
+ *    options["password"] = "パスワードを設定";   // 必須パラメータ
  *    var model = {};
- *    model["model_id"] = "利用可能なモデルID";
+ *    model["model_id"] = "利用可能なモデルID";  // 必須パラメータ
+ *    model["resulttype"] = "nbest";           // resulttypeの推奨値
+ *    model["resultcount"] = 1;                // resultcountの推奨値
  *    options["model"] = model;
- *    recaiusSpeechRecognition.setConfig(valitationCallback, options);
- *  }
  *
+ *    recaiusSpeechRecognition.setConfig(validator, options);
+ *  }
  * 3.音声認識の開始
  *  下記のような関数を作成し、recaiusSpeechRecognition.recognitionStart()を呼び出してください。
  *  function recognitionStart(){
@@ -50,9 +54,17 @@
  *  function valitationCallback(resultObj){
  *    //アプリ側での入力チェック結果取得時の処理を記述
  *    //resultObjが空の場合、入力チェックエラー無し
- *    //resultObjが空でない場合、入力チェックエラー無し
+ *    //resultObjが空でない場合、入力チェッエラー有り
  *    //resultObj[key]=[value]
  *    //keyにパラメータ名, valueに入力チェックエラーメッセージ
+ *    var count = 0;
+ *    for(key in resultObj){
+ *      console.log(key + ":" + resultObj[key]) ;
+ *      count++;
+ *    }
+ *    if(count == 0){
+ *      console.log(設定完了) ;
+ *    }
  *  }
  * 5-1.successCallback
  * 5-1-1.recognitionStartの場合
@@ -60,10 +72,13 @@
  *  function successCallback(resultObj){
  *    var code = resultObj["code"]; // 結果コード
  *    var message = resultObj["message"]; // 結果コードに対応するメッセージ
- *    var resultType = resultObj["result_type"]; // 認識結果の場合のみ。{TMP_RESULT:暫定結果 | RESULT:結果}
- *    var resultStr = resultObj["str"]; // 認識結果の場合のみ。認識結果文字列
- *    var resultJson = resultObj["result"]; // 認識結果の場合のみ。WebAPIからのレスポンス。
+ *    var resultStr = resultObj["str"]; // 認識結果が有る場合のみ。第一候補の認識結果文字列。
  *    //アプリ側での認識成功時の処理を記述
+ *    if(resultStr){
+ *      //認識結果あり
+ *      var resultType = resultObj["result_type"]; // 認識結果が有る場合のみ。{TMP_RESULT:暫定結果 | RESULT:結果}
+ *      var resultJson = resultObj["result"]; // 認識結果が有る場合のみ。WebAPIからのレスポンス。
+ *    }
  *  }
  *
  * 5-1-2.recognitionStopの場合
@@ -71,10 +86,13 @@
  *  function successCallback(resultObj){
  *    var code = resultObj["code"]; // 結果コード
  *    var message = resultObj["message"]; // 結果コードに対応するメッセージ
- *    var resultType = resultObj["result_type"]; // 認識結果の場合のみ。{TMP_RESULT:暫定結果 | RESULT:結果}
- *    var resultStr = resultObj["str"]; // 認識結果の場合のみ。認識結果文字列
- *    var resultJson = resultObj["result"]; // 認識結果の場合のみ。WebAPIからのレスポンス。
+ *    var resultStr = resultObj["str"]; // 認識結果が有る場合のみ。第一候補の認識結果文字列。
  *    //アプリ側での認識成功時の処理を記述
+ *    if(resultStr){
+ *      //認識結果あり
+ *      var resultType = resultObj["result_type"]; // 認識結果が有る場合のみ。{TMP_RESULT:暫定結果 | RESULT:結果}
+ *      var resultJson = resultObj["result"]; // 認識結果が有る場合のみ。WebAPIからのレスポンス。
+ *    }
  *  }
  *
  * 5-2.errorCallback
@@ -92,22 +110,279 @@
  *   <tr><td class="center">S002</td><td>認識結果取得</td><td>TMP_RESULT時の認識結果取得時</td></tr>
  *   <tr><td class="center">S003</td><td>認識完了</td><td>NO_DATA検知時</td></tr>
  *   <tr><td class="center">S004</td><td>認識中断</td><td>NO_DATA検知待ち時でかつ<br>resultAPIへのリクエストが一定回数(5回=5秒)を超過した場合</td></tr>
- *   <tr><td class="center" rowspan="15">異常系</td><td class="center">E101</td><td>setConfig()を事前に実行してください</td><td>setConfig()を呼ばずに、recognitionStart/Stop()を実行した場合</td></tr>
+ *   <tr><td class="center" rowspan="17">異常系</td><td class="center">E101</td><td>setConfig()を事前に実行してください</td><td>setConfig()を呼ばずに、recognitionStart/Stop()を実行した場合</td></tr>
  *   <tr><td class="center">E102</td><td>認識中ではありません</td><td>recognitionStart()を呼ばずに、recognitionStop()を実行した場合</td></tr>
  *   <tr><td class="center">E201</td><td>Device not ready</td><td>録音開始時に入力デバイス（マイク）の準備ができていない場合</td></tr>
  *   <tr><td class="center">E202</td><td>録音開始エラー(<i><b>message</b></i>)</td><td>CordovaPlugin内で録音開始に失敗した場合（Exception発生時）<br><i><b>message</b></i>はe.getMessage()</td></tr>
  *   <tr><td class="center">E203</td><td>録音停止エラー(<i><b>message</b></i>)</td><td>CordovaPlugin内で録音停止に失敗した場合（Exception発生時）<br><i><b>message</b></i>はe.getMessage()</td></tr>
  *   <tr><td class="center">E204</td><td>録音開始エラー(<i><b>message</b></i>)</td><td>録音開始時にCordobaPluginの呼び出しに失敗した場合<br><i><b>message</b></i>はe.message</td></tr>
  *   <tr><td class="center">E205</td><td>録音停止エラー(<i><b>message</b></i>)</td><td>録音停止時にCordobaPluginの呼び出しに失敗した場合<br><i><b>message</b></i>はe.message</td></tr>
- *   <tr><td class="center">E441</td><td>ログインエラー(<i><b>status</b></i>)</td><td>ログイン処理にてエラーが発生した場合<br><i><b>status</b></i>はWebAPIからのレスポンスコード</td></tr>
- *   <tr><td class="center">E412</td><td>ログインエラー(<i><b>name</b></i>)</td><td>ログイン処理にてエラーが発生した場合<br><i><b>name</b></i>はDOMException.name<br>例）サーバに接続できない場合は、"NetworkError"が取得できる。<br>参考:https://developer.mozilla.org/ja/docs/Web/API/DOMError</td></tr>
+ *   <tr><td class="center">E301</td><td>Mic access error!</td><td>navigator.getUserMediaで音声取得に失敗した場合</td></tr>
+ *   <tr><td class="center">E302</td><td>recording error has occurred.</td><td>音声録音中にエラーが発生した場合</td></tr>
+ *   <tr><td class="center">E411</td><td>ログインエラー(<i><b>status</b></i>)</td><td>ログイン処理にてエラーが発生した場合<br><i><b>status</b></i>はWebAPIからのレスポンスコード</td></tr>
+ *   <tr><td class="center">E412</td><td>ログインエラー(<i><b>name</b></i>)</td><td>ログイン処理にてエラーが発生した場合<br><i><b>name</b></i>はXMLHttpRequestException.name 又は DOMException.name<br>例）サーバに接続できない場合は、"NetworkError"が取得できる。<br>参考:https://developer.mozilla.org/ja/docs/Web/API/DOMError</td></tr>
  *   <tr><td class="center">E421</td><td>ログアウトエラー(<i><b>status</b></i>)</td><td>ログアウト処理にてエラーが発生した場合<br><i><b>status</b></i>はWebAPIからのレスポンスコード</td></tr>
- *   <tr><td class="center">E422</td><td>ログアウトエラー(<i><b>status</b></i>)</td><td>ログアウト処理にてエラーが発生した場合<br><i><b>name</b></i>はDOMException.name</td></tr>
+ *   <tr><td class="center">E422</td><td>ログアウトエラー(<i><b>name</b></i>)</td><td>ログアウト処理にてエラーが発生した場合<br><i><b>name</b></i>はXMLHttpRequestException.name 又は DOMException.name</td></tr>
  *   <tr><td class="center">E431</td><td>認識結果取得エラー(<i><b>status</b></i>)</td><td>voice API実行時にてエラーが発生した場合<br><i><b>status</b></i>はWebAPIからのレスポンスコード</td></tr>
- *   <tr><td class="center">E432</td><td>認識結果取得エラー(<i><b>status</b></i>)</td><td>voice API実行時にてエラーが発生した場合<br><i><b>name</b></i>はDOMException.name</td></tr>
+ *   <tr><td class="center">E432</td><td>認識結果取得エラー(<i><b>name</b></i>)</td><td>voice API実行時にてエラーが発生した場合<br><i><b>name</b></i>はXMLHttpRequestException.name 又は DOMException.name</td></tr>
  *   <tr><td class="center">E441</td><td>認識結果取得エラー(<i><b>status</b></i>)</td><td>result API実行時にてエラーが発生した場合<br><i><b>status</b></i>はWebAPIからのレスポンスコード</td></tr>
- *   <tr><td class="center">E442</td><td>認識結果取得エラー(<i><b>status</b></i>)</td><td>result API実行時にてエラーが発生した場合<br><i><b>name</b></i>はDOMException.name</td></tr>
+ *   <tr><td class="center">E442</td><td>認識結果取得エラー(<i><b>name</b></i>)</td><td>result API実行時にてエラーが発生した場合<br><i><b>name</b></i>はXMLHttpRequestException.name 又は DOMException.name</td></tr>
  * </table>
+ *
+ * <table id="nbestJson" class="paramTable">
+ *   <caption>認識結果の構造(resulttype="nbest", resultcount=1の場合)</caption>
+ *   <tr><th class="name">result_type種別</th><th class="description">内容(JSON.stringify)</th></tr>
+ *   <tr><td>TMP_RESULT</td>
+ *   <td>{
+ *   "code": "S002",
+ *   "message": "認識結果取得",
+ *   "result_type": "TMP_RESULT",
+ *   "result": [
+ *     {
+ *       "type": "TMP_RESULT",
+ *       "status": "",
+ *       "result": "関東地方は晴れ"
+ *     }
+ *    ],
+ *   "str": "関東地方は晴れ"
+ * }</td></tr>
+ *   <tr><td>RESULT</td>
+ *   <td>{
+ *   "code": "S001",
+ *   "message": "認識結果取得",
+ *   "result_type": "RESULT",
+ *   "result": [
+ *     {
+ *       "type": "RESULT",
+ *       "status": "",
+ *       "result": [
+ *         {
+ *           "words": [
+ *             {
+ *               "str": "関東地方",
+ *               "yomi": "かんとうちほう",
+ *               "begin": "00:00:04.400",
+ *               "end": "00:00:05.456",
+ *               "confidence": 0.79
+ *             },
+ *             {
+ *               "str": "は",
+ *               "yomi": "は",
+ *               "begin": "00:00:05.456",
+ *               "end": "00:00:05.680",
+ *               "confidence": 1
+ *             },
+ *             {
+ *               "str": "晴れ",
+ *               "yomi": "はれ",
+ *               "begin": "00:00:05.824",
+ *               "end": "00:00:06.64",
+ *               "confidence": 0.78
+ *             },
+ *             {
+ *               "str": "に",
+ *               "yomi": "に",
+ *               "begin": "00:00:06.64",
+ *               "end": "00:00:06.240",
+ *               "confidence": 0.96
+ *             },
+ *             {
+ *               "str": "な",
+ *               "yomi": "な",
+ *               "begin": "00:00:06.240",
+ *               "end": "00:00:06.368",
+ *               "confidence": 1
+ *             },
+ *             {
+ *               "str": "る",
+ *               "yomi": "る",
+ *               "begin": "00:00:06.368",
+ *               "end": "00:00:06.496",
+ *               "confidence": 1
+ *             },
+ *             {
+ *               "str": "でしょう",
+ *               "yomi": "でしょう",
+ *               "begin": "00:00:06.496",
+ *               "end": "00:00:06.976",
+ *               "confidence": 0.85
+ *             }
+ *           ],
+ *           "str": "関東地方は晴れになるでしょう",
+ *           "confidence": 0.84
+ *         }
+ *       ]
+ *     }
+ *   ],
+ *   "str": "関東地方は晴れになるでしょう"
+ * }</td></tr>
+ * </table>
+ *
+ * <table id="onebestJson" class="paramTable">
+ *   <caption>認識結果の構造(resulttype="onebest"の場合)</caption>
+ *   <tr><th class="name">result_type種別</th><th class="description">内容(JSON.stringify)</th></tr>
+ *   <tr><td>TMP_RESULT</td>
+ *   <td>{
+ *   "code": "S002",
+ *   "message": "認識結果取得",
+ *   "result_type": "TMP_RESULT",
+ *   "result": [
+ *     [
+ *       "TMP_RESULT",
+ *       "関東地方は晴れになるでしょう"
+ *     ]
+ *   ],
+ *   "str": "関東地方は晴れになるでしょう"
+ * }</td></tr>
+ *   <tr><td>RESULT</td>
+ *   <td>{
+ *   "code": "S001",
+ *   "message": "認識結果取得",
+ *   "result_type": "RESULT",
+ *   "result": [
+ *     [
+ *       "RESULT",
+ *       "関東地方は晴れになるでしょう。"
+ *     ]
+ *   ],
+ *   "str": "関東地方は晴れになるでしょう。"
+ * }</td></tr>
+ * </table>
+ *
+ * <table id="confnetJson" class="paramTable">
+ *   <caption>認識結果の構造(resulttype="confnet", resultcount=1の場合)</caption>
+ *   <tr><th class="name">result_type種別</th><th class="description">内容(JSON.stringify)</th></tr>
+ *   <tr><td>TMP_RESULT</td>
+ *   <td>{
+ *   "code": "S002",
+ *   "message": "認識結果取得",
+ *   "result_type": "TMP_RESULT",
+ *   "result": [
+ *     {
+ *       "type": "TMP_RESULT",
+ *       "status": "",
+ *       "result": "関東地方は晴れに"
+ *     }
+ *   ],
+ *   "str": "関東地方は晴れに"
+ * }</td></tr>
+ *   <tr><td>RESULT</td>
+ *   <td>{
+ *   "code": "S001",
+ *   "message": "認識結果取得",
+ *   "result_type": "RESULT",
+ *   "result": [
+ *     {
+ *       "type": "RESULT",
+ *       "status": "",
+ *       "result": [
+ *         [
+ *           {
+ *             "str": "関東地方",
+ *             "yomi": "かんとうちほう",
+ *             "begin": "00:00:08.632",
+ *             "end": "00:00:09.632",
+ *             "confidence": 0.8
+ *           }
+ *         ],
+ *         [
+ *           {
+ *             "str": "",
+ *             "yomi": "",
+ *             "begin": "00:00:08.648",
+ *             "end": "00:00:09.632",
+ *             "confidence": 0
+ *           }
+ *         ],
+ *         [
+ *           {
+ *             "str": "は",
+ *             "yomi": "は",
+ *             "begin": "00:00:09.632",
+ *             "end": "00:00:09.864",
+ *             "confidence": 1
+ *           }
+ *         ],
+ *         [
+ *           {
+ *             "str": "",
+ *             "yomi": "",
+ *             "begin": "00:00:09.944",
+ *             "end": "00:00:09.968",
+ *             "confidence": 0.36
+ *           }
+ *         ],
+ *         [
+ *           {
+ *             "str": "",
+ *             "yomi": "",
+ *             "begin": "00:00:09.968",
+ *             "end": "00:00:09.992",
+ *             "confidence": 0
+ *           }
+ *         ],
+ *         [
+ *           {
+ *             "str": "晴れ",
+ *             "yomi": "はれ",
+ *             "begin": "00:00:09.968",
+ *             "end": "00:00:10.168",
+ *             "confidence": 0.73
+ *           }
+ *         ],
+ *         [
+ *           {
+ *             "str": "に",
+ *             "yomi": "に",
+ *             "begin": "00:00:10.168",
+ *             "end": "00:00:10.336",
+ *             "confidence": 0.93
+ *           }
+ *         ],
+ *         [
+ *           {
+ *             "str": "な",
+ *             "yomi": "な",
+ *             "begin": "00:00:10.336",
+ *             "end": "00:00:10.448",
+ *             "confidence": 1
+ *           }
+ *         ],
+ *         [
+ *           {
+ *             "str": "る",
+ *             "yomi": "る",
+ *             "begin": "00:00:10.448",
+ *             "end": "00:00:10.544",
+ *             "confidence": 1
+ *           }
+ *         ],
+ *         [
+ *           {
+ *             "str": "でしょう",
+ *             "yomi": "でしょう",
+ *             "begin": "00:00:10.544",
+ *             "end": "00:00:11.48",
+ *             "confidence": 0.96
+ *           }
+ *         ],
+ *         [
+ *           {
+ *             "str": "",
+ *             "yomi": "",
+ *             "begin": "00:00:11.200",
+ *             "end": "00:00:11.240",
+ *             "confidence": 0.26
+ *           }
+ *         ]
+ *       ]
+ *     }
+ *   ],
+ *   "str": "関東地方は晴れになるでしょう"
+ * }</td></tr>
+ * </table>
+ *
+ * @version 1.0.0
  */
 var recaiusSpeechRecognition = (function() {
 	/** 利用する実装を設定
@@ -153,7 +428,7 @@ var recaiusSpeechRecognition = (function() {
 	 * ”one_best”又は無指定の場合はtrue, それ以外の場合はfalseが設定される<br>
 	 * @private
 	 **/
-	var isOneBest = true;
+	var modelResultType = "one_best";
 
 	/**
 	 * ログインAPIのURL
@@ -250,8 +525,8 @@ var recaiusSpeechRecognition = (function() {
 	 *   <tr><td>host</td><td class="center">○</td><td class="center">String</td><td class="center"></td><td>接続先ホストを指定します。</td></tr>
 	 *   <tr><td>id</td><td class="center">○</td><td class="center">String</td><td class="center"></td><td>サービス利用IDを指定します。</td></tr>
 	 *   <tr><td>password</td><td class="center">○</td><td class="center">String</td><td class="center"></td><td>パスワードを指定します。</td></tr>
-	 *   <tr><td>temp_result</td><td class="center">－</td><td class="center">boolean</td><td class="center">{true | false}</td><td>未確定結果取得時にコールバック関数の呼び出し有無を指定します。</td></tr>
-	 *   <tr><td>buffer_time</td><td class="center">－</td><td class="center">int</td><td class="center"></td><td>一回あたりの録音バッファ(ミリ秒)を指定します。<br>Cordova版では最小値:256, 最大値2000。<br>範囲外の値は最小最大値が適用される。<br>入力値と8の最小公倍数に調整される。</td></tr>
+	 *   <tr><td>temp_result</td><td class="center">－</td><td class="center">boolean</td><td class="center">{true | false}</td><td>未確定結果取得時にコールバック関数の呼び出し有無を指定します。<br>falseを指定した場合、未確定結果取得時にコールバックが呼び出されなくなります。</td></tr>
+	 *   <tr><td>buffer_time</td><td class="center">－</td><td class="center">int</td><td class="center">Cordova版:256～2000</td><td>一回あたりの録音バッファ(ミリ秒)を指定します。<br>推奨値は512です。<br>Cordova版:256より小さい値を指定した場合は256に、2000より大きい値を指定した場合は2000に設定されます。<br>入力値と8の最小公倍数に調整されます。</td></tr>
 	 *   <tr><td>model</td><td class="center">○</td><td class="center">連想配列</td><td class="center"></td><td><a href="#modelList">model</a>参照</td></tr>
 	 *   <tr><td>format</td><td class="center">－</td><td class="center">連想配列</td><td class="center"></td><td><a href="#formatList">format</a> 参照</td></tr>
 	 * </table>
@@ -259,23 +534,23 @@ var recaiusSpeechRecognition = (function() {
 	 * <table id="modelList" class="paramTable">
 	 *   <caption>model</caption>
 	 *   <tr><th class="name">キー</th><th class="necessary">必須</th><th class="type">型</th><th class="default">許容値</th><th class="description">概要</th></tr>
-	 *   <tr><td>audiotype</td><td class="center">－</td><td class="center">String</td><td class="center">audio/x-linear</td><td>音声種別を指定します。</td></tr>
+	 *   <tr><td>audiotype</td><td class="center">－</td><td class="center">String</td><td class="center">audio/x-linear</td><td>音声種別を指定します。<br>本versionでは、audio/x-linear又は無指定のみ受け付けてます。</td></tr>
 	 *   <tr><td>energy_threshold</td><td class="center">－</td><td class="center">int</td><td class="center">0～1000</td><td>音声と判断する音量のレベルを指定します。<br>指定範囲外の値を指定すると無効になります。</td></tr>
-	 *   <tr><td>resulttype</td><td class="center">－</td><td class="center">String</td><td class="center">{nbest | one_best | confnet}</td><td>認識結果の型を指定します。<br>不正な値を指定した場合はHTTPレスポンス400が返ります。</td></tr>
-	 *   <tr><td>resultcount</td><td class="center">－</td><td class="center">int</td><td class="center">1～10</td><td>認識結果の候補が取得できる数を指定します。<br>本値はresulttypeが”one_best”の場合は無効です。<br>1より小さい値を指定した場合は1に、10より大きい値を指定した場合は10に設定されます。</td></tr>
-	 *   <tr><td>model_id</td><td class="center">○</td><td class="center">int</td><td class="center"></td><td>音声認識に使用するモデルIDを指定します。<br>ベースモデルまたはユーザ単語辞書付きモデルのいずれかを指定します。<br>不正な値を指定した場合はHTTPレスポンス400が返ります。</td></tr>
-	 *   <tr><td>pushtotalk</td><td class="center">－</td><td class="center">boolean</td><td class="center">false</td><td>Push-to-Talkモードにするか否かを指定します。</td></tr>
+	 *   <tr><td>resulttype</td><td class="center">－</td><td class="center">String</td><td class="center">{nbest | one_best | confnet}</td><td>認識結果の型を指定します。<br>推奨値はnbestです。<br>不正な値を指定した場合はエラーコードE411が返却されます。</td></tr>
+	 *   <tr><td>resultcount</td><td class="center">－</td><td class="center">int</td><td class="center">1～10</td><td>認識結果の候補が取得できる数を指定します。<br>本値はresulttypeが”one_best”の場合は無効です。<br>推奨値は1です。<br>1より小さい値を指定した場合は1に、10より大きい値を指定した場合は10に設定されます。</td></tr>
+	 *   <tr><td>model_id</td><td class="center">○</td><td class="center">int</td><td class="center"></td><td>音声認識に使用するモデルIDを指定します。<br>ベースモデルまたはユーザ単語辞書付きモデルのいずれかを指定します。<br>不正な値を指定した場合はエラーコードE411が返却されます。</td></tr>
+	 *   <tr><td>pushtotalk</td><td class="center">－</td><td class="center">boolean</td><td class="center">false</td><td>Push-to-Talkモードにするか否かを指定します。<br>本versionでは、false又は無指定のみ受け付けてます。</td></tr>
 	 *   <tr><td>datalog</td><td class="center">－</td><td class="center">int</td><td class="center">{0 | 1}</td><td>認識する音声データを保存するか否かを指定します。<br>0の時は保存せず、1の時に保存します。<br>※本値は、契約時に音声データを保存する契約を交わした場合のみ有効です。<br>0より小さい値を指定した場合は0に、1より大きい値を指定した場合は1に設定されます。</td></tr>
-	 *   <tr><td>comment</td><td class="center">－</td><td class="center">String</td><td class="center">1024文字以内</td><td>サーバーに保存する音声データに付与するコメントです。<br>任意の文字列を1024文字まで格納できます。<br>1024文字を超えた場合はHTTPレスポンス400が返ります。</td></tr>
+	 *   <tr><td>comment</td><td class="center">－</td><td class="center">String</td><td class="center">1024文字以内</td><td>サーバーに保存する音声データに付与するコメントです。<br>任意の文字列を1024文字まで格納できます。<br>1024文字を超えた場合はエラーコードE411が返却されます。</td></tr>
 	 * </table>
 	 * <br>
 	 * <table id="formatList" class="paramTable">
 	 *   <caption>format</caption>
 	 *   <tr><th class="name">キー</th><th class="necessary">必須</th><th class="type">型</th><th class="default">許容値</th><th class="description">概要</th></tr>
-	 *   <tr><td>audio_source</td><td class="center">－</td><td class="center">int</td><td class="center">1</td><td>録音時の入力ソースを指定します。</td></tr>
-	 *   <tr><td>sampling_rate</td><td class="center">－</td><td class="center">int</td><td class="center">16,000</td><td>録音時のサンプリングレートを指定します。</td></tr>
-	 *   <tr><td>channel</td><td class="center">－</td><td class="center">int</td><td class="center">16</td><td>録音時のチャンネル数を指定します。</td></tr>
-	 *   <tr><td>audio_format</td><td class="center">－</td><td class="center">int</td><td class="center">2</td><td>録音時のフォーマットを指定します。</td></tr>
+	 *   <tr><td>audio_source</td><td class="center">－</td><td class="center">int</td><td class="center">1</td><td>録音時の入力ソースを指定します。<br><a href="http://developer.android.com/reference/android/media/MediaRecorder.AudioSource.html">MediaRecorder.AudioSource</a>の値を指定します<br>本versionでは、1(=MediaRecorder.AudioSource.MIC)又は無指定のみ受け付けてます。</td></tr>
+	 *   <tr><td>sampling_rate</td><td class="center">－</td><td class="center">int</td><td class="center">16,000</td><td>録音時のサンプリングレートを指定します。<br>本versionでは、16000又は無指定のみ受け付けてます。</td></tr>
+	 *   <tr><td>channel</td><td class="center">－</td><td class="center">int</td><td class="center">16</td><td>録音時のチャンネルを指定します。<br><a href="http://developer.android.com/reference/android/media/AudioFormat.html#CHANNEL_IN_MONO">AudioFormat.CHANNEL_XXX</a>の値を指定します<br>本versionでは、16(=AudioFormat.CHANNEL_IN_MONO)又は無指定のみ受け付けてます。</td></tr>
+	 *   <tr><td>audio_format</td><td class="center">－</td><td class="center">int</td><td class="center">2</td><td>録音時のフォーマットを指定します。<br><a href="http://developer.android.com/reference/android/media/AudioFormat.html#ENCODING_PCM_16BIT#CHANNEL_IN_MONO">AudioFormat.ENCODING_XXX</a>の値を指定します<br>本versionでは、2(=AudioFormat.ENCODING_PCM_16BIT)又は無指定のみ受け付けてます。</td></tr>
 	 * </table>
 	 *
 	 * @throws コールバック関数が指定されていない場合にスロー
@@ -301,10 +576,10 @@ var recaiusSpeechRecognition = (function() {
 			loginOptions = options;
 			isSetting = true;
 			var resulttype = options["model"]["resulttype"];
-			if(!recaiusUtils.isEmpty(resulttype) && resulttype !== "one_best"){
-				isOneBest = false;
-			}else{
-				isOneBest = true;
+			if(!recaiusUtils.isEmpty(resulttype) && resulttype === "nbest"){
+				modelResultType = resulttype;
+			}else if(!recaiusUtils.isEmpty(resulttype) && resulttype === "confnet"){
+				modelResultType = resulttype;
 			}
 		}
 		try{
@@ -390,7 +665,7 @@ var recaiusSpeechRecognition = (function() {
 			// 既にUUIDが発行済みの場合はログイン処理をスルー
 			// TODO 本来はSessionタイムアウトの問題があるためUUIDの有無のみではNG
 			// APIへの最終アクセス時間又は確認用APIがあればそれを利用する方が望ましい
-			// 今回は常に音声送信が発生するためSessionタイムアウトは発生しないはず？
+			// 但し、今回は常に音声送信が発生するためSessionタイムアウトは発生しない
 			return true;
 		}
 		// 接続先URLの設定
@@ -426,16 +701,19 @@ var recaiusSpeechRecognition = (function() {
 	 * @param {function} successCallback 成功時のコールバック関数。コールバック関数に関しては<a href="#callbackSample">サンプルコード参照</a>
 	 * @param {function} errorCallback 失敗時のコールバック関数。コールバック関数に関しては<a href="#callbackSample">サンプルコード参照</a>
 	 *
-	 * @return レスポンスデータを格納した{連想配列}
+	 * @example 認識成功時にコールバック関数の引数に設定されるオブジェクト{連想配列}
 	 * <table class="paramTable">
-	 *   <caption>返却される{連想配列}</caption>
+	 *   <caption>認識結果{連想配列}</caption>
 	 *   <tr><th class="name">キー</th><th class="type">型</th><th class="necessary">設定有無</th><th class="description">概要</th></tr>
 	 *   <tr><td>code</td><td class="center">String</td><td class="center">常時</td><td>レスポンスコード<br>詳細は<a href="#codeList">コード一覧</a>参照</td></tr>
 	 *   <tr><td>message</td><td class="center">String</td><td class="center">常時</td><td>レスポンスメッセージ<br>詳細は<a href="#codeList">コード一覧</a>参照</td></tr>
 	 *   <tr><td>result_type</td><td class="center">String</td><td class="center">認識結果有の場合のみ</td><td>暫定結果の場合、”TMP_RESULT”<br>確定結果の場合、”RESULT”</td></tr>
-	 *   <tr><td>str</td><td class="center">String</td><td class="center">認識結果有の場合のみ</td><td>認識結果文字列</td></tr>
+	 *   <tr><td>str</td><td class="center">String</td><td class="center">認識結果有の場合のみ</td><td>第一候補の認識結果文字列</td></tr>
 	 *   <tr><td>result</td><td class="center">{連想配列}</td><td class="center">認識結果有の場合のみ</td><td>WebAPIから返却された認識結果の配列</td></tr>
 	 * </table>
+	 * <label>resulttype="nbest"を指定している場合の<a href="#nbestJson">サンプルはこちら</a></label><br>
+	 * <label>resulttype="onebest"を指定している場合の<a href="#onebestJson">サンプルはこちら</a></label><br>
+	 * <label>resulttype="confnet"を指定している場合の<a href="#confnetJson">サンプルはこちら</a></label>
 	 *
 	 * @throws コールバック関数が指定されていない場合にスロー
 	 **/
@@ -470,16 +748,19 @@ var recaiusSpeechRecognition = (function() {
 	 * @param {function} successCallback 成功時のコールバック関数。コールバック関数に関しては<a href="#callbackSample">サンプルコード参照</a>
 	 * @param {function} errorCallback 失敗時のコールバック関数。コールバック関数に関しては<a href="#callbackSample">サンプルコード参照</a>
 	 *
-	 * @return レスポンスデータを格納した{連想配列}
+	 * @example 認識成功時にコールバック関数の引数に設定されるオブジェクト{連想配列}
 	 * <table class="paramTable">
-	 *   <caption>返却される{連想配列}</caption>
+	 *   <caption>認識結果{連想配列}</caption>
 	 *   <tr><th class="name">キー</th><th class="type">型</th><th class="necessary">設定有無</th><th class="description">概要</th></tr>
 	 *   <tr><td>code</td><td class="center">String</td><td class="center">常時</td><td>レスポンスコード<br>詳細は<a href="#codeList">コード一覧</a>参照</td></tr>
 	 *   <tr><td>message</td><td class="center">String</td><td class="center">常時</td><td>レスポンスメッセージ<br>詳細は<a href="#codeList">コード一覧</a>参照</td></tr>
 	 *   <tr><td>result_type</td><td class="center">String</td><td class="center">認識結果有の場合のみ</td><td>暫定結果の場合、”TMP_RESULT”<br>確定結果の場合、”RESULT”</td></tr>
-	 *   <tr><td>str</td><td class="center">String</td><td class="center">認識結果有の場合のみ</td><td>認識結果文字列</td></tr>
+	 *   <tr><td>str</td><td class="center">String</td><td class="center">認識結果有の場合のみ</td><td>第一候補の認識結果文字列</td></tr>
 	 *   <tr><td>result</td><td class="center">{連想配列}</td><td class="center">認識結果有の場合のみ</td><td>WebAPIから返却された認識結果の配列</td></tr>
 	 * </table>
+	 * <label>resulttype="nbest"を指定している場合の<a href="#nbestJson">サンプルはこちら</a></label><br>
+	 * <label>resulttype="onebest"を指定している場合の<a href="#onebestJson">サンプルはこちら</a></label><br>
+	 * <label>resulttype="confnet"を指定している場合の<a href="#confnetJson">サンプルはこちら</a></label>
 	 *
 	 * @throws コールバック関数が指定されていない場合にスロー
 	 **/
@@ -521,10 +802,19 @@ var recaiusSpeechRecognition = (function() {
 	function convertTimeFormat(item){
 		try{
 			item.result.forEach(function(resultElm){
-				resultElm.words.forEach(function(elm){
-					elm.begin = recaiusUtils.convertMillTime2HHMMSSMS(elm.begin);
-					elm.end = recaiusUtils.convertMillTime2HHMMSSMS(elm.end);
-				});
+				if(resultElm.words){
+					// nbestの場合
+					resultElm.words.forEach(function(elm){
+						elm.begin = recaiusUtils.convertMillTime2HHMMSSMS(elm.begin);
+						elm.end = recaiusUtils.convertMillTime2HHMMSSMS(elm.end);
+					});
+				}else{
+					// confnetの場合
+					resultElm.forEach(function(elm){
+						elm.begin = recaiusUtils.convertMillTime2HHMMSSMS(elm.begin);
+						elm.end = recaiusUtils.convertMillTime2HHMMSSMS(elm.end);
+					});
+				}
 			});
 		}catch(e){
 			// エラー時は未変換のまま
@@ -550,8 +840,8 @@ var recaiusSpeechRecognition = (function() {
 						var result;
 						var temp_result;
 						var isStop;
-						if(!isOneBest){
-							// one_best以外の場合の処理
+						if(modelResultType === "nbest" || modelResultType === "confnet"){
+							// nbest, confnetの場合の処理
 							result = json.filter(function (item, index) {if (item.type === "RESULT"){convertTimeFormat(item);return true;}});
 							temp_result = json.filter(function (item, index) {if (item.type === "TMP_RESULT") return true;});
 							isStop = json.filter(function (item, index) {if (item.type === "NO_DATA") return true});
@@ -624,7 +914,7 @@ var recaiusSpeechRecognition = (function() {
 					if(obj instanceof DOMException || obj instanceof XMLHttpRequestException){
 						code = "E442";
 						message += "(" + obj.name + ")";
-					}else if(obj instanceof XMLHttpRequestProgressEvent){
+					}else{
 						message += "(" + obj.target.status + ")";
 					}
 					try{
@@ -639,7 +929,7 @@ var recaiusSpeechRecognition = (function() {
 	/**
 	 * ログインAPI成功時のコールバック関数<br>
 	 * @private
-	 * @param {XMLHttpRequestProgressEvent} obj レスポンス
+	 * @param {object} obj レスポンス
 	 */
 	function loginSuccess(obj){
 		// ログイン成功時に返却されるUUIDを確保する
@@ -652,7 +942,7 @@ var recaiusSpeechRecognition = (function() {
 	 * ログインAPI失敗時のコールバック関数<br>
 	 * エラー内容を生成し、クライアント側から指定されているコールバックを呼び出す。
 	 * @private
-	 * @param {DOMException | XMLHttpRequestException | XMLHttpRequestProgressEvent} obj レスポンス
+	 * @param {DOMException | XMLHttpRequestException | object} obj レスポンス
 	 */
 	function loginError(obj){
 		recaiusUtils.debug("loginError");
@@ -662,7 +952,7 @@ var recaiusSpeechRecognition = (function() {
 		if(obj instanceof DOMException || obj instanceof XMLHttpRequestException){
 			code = "E412";
 			message += "(" + obj.name + ")";
-		}else if(obj instanceof XMLHttpRequestProgressEvent){
+		}else{
 			message += "(" + obj.target.status + ")";
 		}
 		try{
@@ -675,7 +965,7 @@ var recaiusSpeechRecognition = (function() {
 	/**
 	 * ログアウトAPI成功時のコールバック関数
 	 * @private
-	 * @param {XMLHttpRequestProgressEvent} obj レスポンス
+	 * @param {object} obj レスポンス
 	 */
 	function logoutSuccess(obj){
 		// ログアウト成功時にUUIDをクリアする
@@ -692,7 +982,7 @@ var recaiusSpeechRecognition = (function() {
 	 * ログアウトAPI失敗時のコールバック関数<br>
 	 * エラー内容を生成し、クライアント側から指定されているコールバックを呼び出す。
 	 * @private
-	 * @param {DOMException | XMLHttpRequestException | XMLHttpRequestProgressEvent} obj レスポンス
+	 * @param {DOMException | XMLHttpRequestException | object} obj レスポンス
 	 */
 	function logoutError(obj){
 		recaiusUtils.debug("logoutError");
@@ -701,7 +991,7 @@ var recaiusSpeechRecognition = (function() {
 		if(obj instanceof DOMException || obj instanceof XMLHttpRequestException){
 			code = "E422";
 			message += "(" + obj.name + ")";
-		}else if(obj instanceof XMLHttpRequestProgressEvent){
+		}else{
 			message += "(" + obj.target.status + ")";
 		}
 		try{
@@ -715,7 +1005,7 @@ var recaiusSpeechRecognition = (function() {
 	 * 録音処理成功時のコールバック関数<br>
 	 * 引数で受け取ったBLOBデータをWebAPIへPUTする。
 	 * @private
-	 * @param {BLOB|ArrayBuffer} 送信する音声データ
+	 * @param {BLOB|ArrayBuffer} obj 送信する音声データ
 	 */
 	function recordingStartSuccess(obj){
 		recaiusUtils.debug("recordingSuccess");
@@ -736,7 +1026,7 @@ var recaiusSpeechRecognition = (function() {
 			cType = "multipart/form-data; boundary=" + boundary;
 			var buffer = recaiusUtils.unicode2buffer('--' + boundary + '\r\n' + 'Content-Disposition: form-data; name="voiceid"\r\n\r\n'
 											+ voiceCnt + '\r\n'
-											+ '--' + boundary + '\r\n' + 'Content-Disposition: form-data; name="voice";filename="cordovaTest.wav"\r\n'
+											+ '--' + boundary + '\r\n' + 'Content-Disposition: form-data; name="voice"; filename="recaiusCommonIF.wav"\r\n'
 											+ 'Content-Type: audio/wav\r\n\r\n');
 			buffer = recaiusUtils.appendBuffer(buffer, obj);
 			buffer = recaiusUtils.appendBuffer(buffer , recaiusUtils.unicode2buffer('\r\n' + '--' + boundary + '--'));
@@ -780,10 +1070,7 @@ var recaiusSpeechRecognition = (function() {
 			recaiusUtils.debug("Error in successCallback function::" + e.message);
 		}
 		// API側へ音声データ終了のデータ(0byte音声データを送信)
-		// ArrayBufferではサーバ側が受信できていない模様 ---->
-		var stopArray = new ArrayBuffer(0);
-		//var stopArray = createBlobOrArrayBuffer();
-		// ArrayBufferではサーバ側が受信できていない模様 <----
+		var stopArray = createBlobOrArrayBuffer();
 		recordingStartSuccess(stopArray);
 
 		// 接続先URLの取得
@@ -809,10 +1096,7 @@ var recaiusSpeechRecognition = (function() {
 		}
 
 		// API側へ音声データ終了のデータ(0byte音声データを送信)
-		// ArrayBufferではサーバ側が受信できていない模様 ---->
-		//var stopArray = new ArrayBuffer(0);
 		var stopArray = createBlobOrArrayBuffer();
-		// ArrayBufferではサーバ側が受信できていない模様 <----
 		recordingStartSuccess(stopArray);
 
 		// 接続先URLの取得
@@ -825,10 +1109,7 @@ var recaiusSpeechRecognition = (function() {
 	/**
 	 * 認識終了用の0Byteデータを作成する<br>
 	 * 1.BLOBにて作成<br>
-	 * 2.BLOBがサポートされていない場合（Android4.4以下）、BlobBuilderにて作成<br>
-	 * 3.BlobBuilderがサポートされていない場合、ArrayBufferにて作成<br>
-	 * <br>
-	 * <label class="attention">(注)ArrayBufferの場合、サーバ側で受信できないとの報告あり</label>
+	 * 2.BlobBuilderがサポートされていない場合、ArrayBufferにて作成<br>
 	 *
 	 * @return 作成したBLOB又はArrayBufferオブジェクト
 	 * @private
@@ -840,20 +1121,6 @@ var recaiusSpeechRecognition = (function() {
 			retBlob = new Blob([bytes], {type: "audio/wav"});
 		} catch(e) {
 			recaiusUtils.debug("new BOLB not support.");
-			window.BlobBuilder = window.BlobBuilder ||
-			window.WebKitBlobBuilder ||
-			window.MozBlobBuilder ||
-			window.MSBBlobBuilder;
-			if(e.name == "TypeError" && window.BlobBuilder) {
-				//Android4.4以下の対応
-				var blobBuilder = new BlobBuilder();
-				blobBuilder.append(bytes.buffer);
-				retBlob = blobBuilder.getBlob("audio/wav");
-			} else {
-				recaiusUtils.debug("window.BlobBuilder not support.");
-				// どうしてもNGだったらArrayBufferで作成
-				retBlob = new ArrayBuffer(bytes.buffer);
-			}
 			// どうしてもNGだったらArrayBufferで作成
 			retBlob = new ArrayBuffer(bytes.buffer);
 		}
@@ -869,7 +1136,7 @@ var recaiusSpeechRecognition = (function() {
 	 * VoiceAPI実行成功時の処理<br>
 	 * 返却データを作成し、クライアント側のコールバック関数を呼び出す。<br>
 	 *
-	 * @param {XMLHttpRequestProgressEvent} obj レスポンス
+	 * @param {object} obj レスポンス
 	 *
 	 * @private
 	 **/
@@ -885,8 +1152,8 @@ var recaiusSpeechRecognition = (function() {
 				//recaiusUtils.debug(JSON.stringify(json, null, '\t'));
 				var result;
 				var temp_result;
-				if(!isOneBest){
-					// one_best以外の場合の処理
+				if(modelResultType === "nbest" || modelResultType === "confnet"){
+					// nbest, confnetの場合の処理
 					result = json.filter(function (item, index) {if (item.type === "RESULT"){convertTimeFormat(item);return true;}});
 					temp_result = json.filter(function (item, index) {if (item.type === "TMP_RESULT") return true;});
 				}else{
@@ -921,17 +1188,17 @@ var recaiusSpeechRecognition = (function() {
 	 * 返却データを作成し、クライアント側のコールバック関数を呼び出す。<br>
 	 *
 	 * @private
-	 * @param {DOMException | XMLHttpRequestException | XMLHttpRequestProgressEvent} obj レスポンス
+	 * @param {DOMException | XMLHttpRequestException | object} obj レスポンス
 	 **/
 	function voiceApiError(obj){
 		recaiusUtils.debug("voiceApiError()");
 		recaiusUtils.debug(obj);
-		var code = "431";
+		var code = "E431";
 		var message = "認識結果取得エラー";
 		if(obj instanceof DOMException || obj instanceof XMLHttpRequestException){
 			code = "432";
 			message += "(" + obj.name + ")";
-		}else if(obj instanceof XMLHttpRequestProgressEvent){
+		}else{
 			message += "(" + obj.target.status + ")";
 		}
 		if(voiceApiErrCnt < 5){
@@ -965,7 +1232,7 @@ var recaiusSpeechRecognition = (function() {
 	 *   <tr><td>code</td><td class="center">String</td><td class="center">常時</td><td>レスポンスコード<br>詳細は<a href="#codeList">コード一覧</a>参照</td></tr>
 	 *   <tr><td>message</td><td class="center">String</td><td class="center">常時</td><td>レスポンスメッセージ<br>詳細は<a href="#codeList">コード一覧</a>参照</td></tr>
 	 *   <tr><td>result_type</td><td class="center">String</td><td class="center">認識結果有の場合のみ</td><td>暫定結果の場合、”TMP_RESULT”<br>確定結果の場合、”RESULT”</td></tr>
-	 *   <tr><td>str</td><td class="center">String</td><td class="center">認識結果有の場合のみ</td><td>認識結果文字列</td></tr>
+	 *   <tr><td>str</td><td class="center">String</td><td class="center">認識結果有の場合のみ</td><td>第一候補の認識結果文字列</td></tr>
 	 *   <tr><td>result</td><td class="center">{連想配列}</td><td class="center">認識結果有の場合のみ</td><td>WebAPIから返却された認識結果の配列</td></tr>
 	 * </table>
 	 */
@@ -979,9 +1246,22 @@ var recaiusSpeechRecognition = (function() {
 		}
 		if(resultJson && resultJson.length > 0){
 			resData["result"] = resultJson;
-			if(!isOneBest){
+			if(modelResultType === "nbest" || modelResultType === "confnet"){
 				if(resultType === "RESULT"){
-					resData["str"] = resultJson[resultJson.length - 1].result[0].str;
+					if(modelResultType === "nbest"){
+						// nbest時の処理
+						resData["str"] = resultJson[resultJson.length - 1].result[0].str;
+					}else{
+						// confnet時の処理
+						var str = "";
+						resultJson[resultJson.length - 1].result.forEach(function(wordsElm){
+							if(wordsElm.length>0){
+								// 第一候補を取得
+								str = str + wordsElm[0].str;
+							}
+						});
+						resData["str"] = str;
+					}
 				}else{
 					var tmpResult = resultJson.filter(function (item, index) { if (item.type === "TMP_RESULT") return true });
 					var resultOne = tmpResult[tmpResult.length - 1];

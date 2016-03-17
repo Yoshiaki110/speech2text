@@ -1,5 +1,10 @@
 /*
- * ユーティリティ用
+ * @fileOverview ユーティリティクラス
+ *
+ */
+/**
+ * @class ユーティリティクラス
+ * @version 1.0.0
  */
 var recaiusUtils = (function() {
 	var debugFlag = true;
@@ -122,7 +127,7 @@ var recaiusUtils = (function() {
 	 * 引数で受け取ったBufferを結合したBufferを返却する。
 	 * @param {Buffer} buf1 結合対象1
 	 * @param {Buffer} buf2 結合対象2
-	 * @return 結合後のバッファ(1+2の結果)
+	 * @return 結合後のバッファ(buf1+buf2の結果)
 	 */
 	function appendBuffer(buf1, buf2) {
 		var uint8array = new Uint8Array(buf1.byteLength + buf2.byteLength);
@@ -150,8 +155,8 @@ var recaiusUtils = (function() {
 	}
 
 	/**
-	 * WebAPIへのリクエスト処理<br>
-	 * TODO:サーバ側でクロスドメイン用設定を追加する事
+	 * 引数で指定されたURLへのリクエスト処理を実施する<br>
+	 * 本APIを利用する場合、サーバ設定にてクロスドメイン用設定を追加する必要がある。
 	 *
 	 * @param {String} method リクエスト種別{POST, GET. PUT}
 	 * @param {String} url 接続先URL
@@ -180,7 +185,7 @@ var recaiusUtils = (function() {
 					error(event);
 				}
 			}
-			httpObj.onprogress  = function(event){
+			httpObj.onprogress = function(event){
 				//未処理
 			}
 			httpObj.onerror = function(event){
@@ -193,13 +198,6 @@ var recaiusUtils = (function() {
 				recaiusUtils.debug("ontimeout status=" + event.target.status);
 				error(event);
 			}
-			/*
-			if(sendData instanceof Blob){
-				recaiusUtils.debug("blob[size][type]=[" + sendData.size + "][" + sendData.type + "]");
-			}else if (sendData instanceof ArrayBuffer){
-				recaiusUtils.debug("arrayBuffer[byteLength]=[" + sendData.byteLength + "]");
-			}
-			*/
 			httpObj.send( sendData );
 		}catch(e){
 			// e.code=19:ネットワーク障害他

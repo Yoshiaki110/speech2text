@@ -2,13 +2,14 @@
  * @class Ricaius音声認識APIを利用する際に必要なJavaScriptファイルをインポートするためのクラス。<br>
  * ユーザからは本ファイルを読み込んで頂く<br>
  * @example 利用環境に応じて下記行を追加して必要なファイルを読み込むようにする。
- *   ■Cordova版を利用する場合
+ *   ■Cordova版を利用する場合（但し利用アプリ側で既にcordova.jsの設定をされている場合は、cordova.jsの読み込みは不要です）
  *   &lt;script type=&quot;text/javascript&quot; src=&quot;./cordova.js&quot;&gt;&lt;/script&gt;
  *   &lt;script type=&quot;text/javascript&quot; src=&quot;javascripts/recaius-speech-recognition-import.js&quot;&gt;&lt;/script&gt;
  *
  *   ■WebRCT版を利用する場合
  *   &lt;script type=&quot;text/javascript&quot; src=&quot;javascripts/recaius-speech-recognition-import.js&quot;&gt;&lt;/script&gt;
  *
+ * @version 1.0.0
  */
 var recaiusSpeechRecognitionImport = (function() {
 	/**
