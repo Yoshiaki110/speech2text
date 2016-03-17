@@ -5,11 +5,25 @@
     "NODE_ENV": {
       "value": "development"
     },
-    "RECAIUS_ID": {
+    "RECAIUS_ASR_JAJP_ID": {
       "value": ""
     },
-    "RECAIUS_PASSWORD": {
+    "RECAIUS_ASR_JAJP_PASSWORD": {
       "value": ""
-    }
+    },
+    "RECAIUS_ASR_ENUS_ID": {
+      "value": ""
+    },
+    "RECAIUS_ASR_ENUS_PASSWORD": {
+      "value": ""
+    }, 
+    "RECAIUS_ASR_ZHCN_ID": {
+      "value": ""
+    },
+    "RECAIUS_ASR_ZHCN_PASSWORD": {
+      "value": ""
+    } 
+  }
+}
   }
 }

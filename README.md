@@ -42,20 +42,40 @@ views/                // 画面のテンプレート
 ## Usage & Install
 [ディベロッパーサイトのチュートリアル](https://developer.recaius.io/jp/tutorial.html)を参考にして下さい。
 
-RECAIUS Developerサイトから送られてくるログイン情報(ディベロッパーIDとパスワード)は、プログラムに直接書き込むのではなく、環境変数に設定することをおすすめします。
+RECAIUS Developerサイトから送られてくるログイン情報(サービス利用IDとパスワード)は、プログラムに直接書き込むのではなく、環境変数に設定することをおすすめします。
 
 なお、ログイン情報は、/lib/recaius/speech2text/index.js で利用されています。
+音声認識を行うモデルにより利用するサービス利用IDとパスワードが変更されます。
 
 ```js
     static createDefault() {
-      return new Speech2Text(
-        process.env.RECAIUS_ID || 'YOUR_RECAIUS_DEVELOPER_ID',                 //RECAIUSの開発者ID
-        process.env.RECAIUS_PASSWORD || 'YOUR_RECAIUS_DEVELOPER_PASSWORD'       //RECAIUSの開発者パスワード
+        var recaiusAsrId;
+        var recaiusAsrPassword;
+        switch(model_id) {
+          case 1: // 日本語
+            recaiusAsrId = process.env.RECAIUS_ASR_JAJP_ID;
+            recaiusAsrPassword = process.env.RECAIUS_ASR_JAJP_PASSWORD;
+            break;
+          case 5: // 英語
+            recaiusAsrId = process.env.RECAIUS_ASR_ENUS_ID;
+            recaiusAsrPassword = process.env.RECAIUS_ASR_ENUS_PASSWORD;
+            break;
+          case 7: // 北京語
+            recaiusAsrId = process.env.RECAIUS_ASR_ZHCN_ID;
+            recaiusAsrPassword = process.env.RECAIUS_ASR_ZHCN_PASSWORD;
+            break;
+          default: //
+            recaiusAsrId = process.env.RECAIUS_ASR_JAJP_ID;
+            recaiusAsrPassword = process.env.RECAIUS_ASR_JAJP_PASSWORD;
+        }
+        return new Speech2Text(
+            recaiusAsrId,
+            recaiusAsrPassword
         );
     }
 ```
 
-Herokuを利用する場合は下記のボタンをクリックし、RECAIUS_IDとRECAIUS_PASSWORDを設定すれば簡単にアプリケーションがデプロイできます。
+Herokuを利用する場合は下記のボタンをクリックし、ログイン情報を設定すれば簡単にアプリケーションがデプロイできます。
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 

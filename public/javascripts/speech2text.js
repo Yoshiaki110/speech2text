@@ -14,7 +14,7 @@ function initialize() {
     options["host"] = "/api/voice-recognition"; //ID/PASSWORDを隠蔽するため、ラッパーAPIを立ててそこからアクセスする
     options["model"] = {};
     options["model"]["energy_threshold"] = 300;
-    options["model"]["model_id"] = 1; //必須, 数値のみ
+    options["model"]["model_id"] = 1; //必須, 数値のみ(1:日本語、5:英語、7:北京語)
     options["model"]["audiotype"] = "audio/x-linear"; //WebRTCはリニアPCMのみ対応
     options["model"]["pushtotalk"] = false;
     options["model"]["resulttype"] = "nbest"; //本サンプルはnbestの結果1のみ対応
